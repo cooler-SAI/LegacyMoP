@@ -15,7 +15,7 @@ project(Project_Skyfire)
 if( UNIX )
   cmake_minimum_required(VERSION 3.10.2)
 else()
-  cmake_minimum_required(VERSION 3.17.0)
+  cmake_minimum_required(VERSION 3.16.4)
 endif()
 
 # CMake policies (can not be handled elsewhere)
@@ -54,7 +54,7 @@ endif()
 
 include(CheckPlatform)
 
-set(OPENSSL_EXPECTED_VERSION 1.1.1)
+set(OPENSSL_EXPECTED_VERSION 1.1.0)
 set(ACE_EXPECTED_VERSION 6.4.5)
 
 find_package(PCHSupport)
