@@ -37,6 +37,7 @@
 #include "BattlegroundRV.h"
 #include "BattlegroundIC.h"
 #include "BattlegroundTP.h"
+#include "BattlegroundTTP.h"
 #include "BattlegroundTV.h"
 #include "BattlegroundBFG.h"
 #include "Chat.h"
@@ -518,6 +519,7 @@ void BattlegroundMgr::BuildPvpLogDataPacket(WorldPacket* data, Battleground* bg)
             case BattlegroundTypeId::BATTLEGROUND_DS:
             case BattlegroundTypeId::BATTLEGROUND_RV:
             case BattlegroundTypeId::BATTLEGROUND_TV:
+            case BattlegroundTypeId::BATTLEGROUND_TTP:
                 data->WriteBits(0, 22);
                 break;
             default:
@@ -848,6 +850,9 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BattlegroundTypeId::BATTLEGROUND_BFG:
             bg = new BattlegroundBFG(*(BattlegroundBFG*)bg_template);
             break;
+        case BATTLEGROUND_TTP:
+            bg = new BattlegroundTTP(*(BattlegroundTTP*)bg_template);
+            break;
         case BattlegroundTypeId::BATTLEGROUND_TV:
             bg = new BattlegroundTV(*(BattlegroundTV*)bg_template);
             break;
@@ -944,6 +949,9 @@ bool BattlegroundMgr::CreateBattleground(CreateBattlegroundData& data)
             break;
         case BattlegroundTypeId::BATTLEGROUND_TP:
             bg = new BattlegroundTP;
+            break;
+        case BattlegroundTypeId::BATTLEGROUND_TTP:
+            bg = new BattlegroundTTP;
             break;
         case BattlegroundTypeId::BATTLEGROUND_TV:
             bg = new BattlegroundTV;
@@ -1215,6 +1223,7 @@ bool BattlegroundMgr::IsArenaType(BattlegroundTypeId bgTypeId)
             || bgTypeId == BattlegroundTypeId::BATTLEGROUND_NA
             || bgTypeId == BattlegroundTypeId::BATTLEGROUND_DS
             || bgTypeId == BattlegroundTypeId::BATTLEGROUND_RV
+            || bgTypeId == BattlegroundTypeId::BATTLEGROUND_TTP
             || bgTypeId == BattlegroundTypeId::BATTLEGROUND_TV
             || bgTypeId == BattlegroundTypeId::BATTLEGROUND_RL;
 }
@@ -1247,6 +1256,7 @@ BattlegroundQueueTypeId BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId bgType
         case BattlegroundTypeId::BATTLEGROUND_NA:
         case BattlegroundTypeId::BATTLEGROUND_RL:
         case BattlegroundTypeId::BATTLEGROUND_RV:
+        case BattlegroundTypeId::BATTLEGROUND_TTP:
         case BattlegroundTypeId::BATTLEGROUND_TV:
             switch (arenaType)
             {
