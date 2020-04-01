@@ -49,7 +49,7 @@ enum WardenCheckType
 {
     MEM_CHECK               = 0xF3, // 243: byte moduleNameIndex + uint Offset + byte Len (check to ensure memory isn't modified)
     PAGE_CHECK_A            = 0xB2, // 178: uint Seed + byte[20] SHA1 + uint Addr + byte Len (scans all pages for specified hash)
-    PAGE_CHECK_B            = 0xBF, // 191: uint Seed + byte[20] SHA1 + uint Addr + byte Len (scans only pages starts with MZ+PE headers for specified hash)
+    PAGE_CHECK_B            = 0x1B, // 191: uint Seed + byte[20] SHA1 + uint Addr + byte Len (scans only pages starts with MZ+PE headers for specified hash)
     MPQ_CHECK               = 0x98, // 152: byte fileNameIndex (check to ensure MPQ file isn't modified)
     LUA_STR_CHECK           = 0x8B, // 139: byte luaNameIndex (check to ensure LUA string isn't used)
     DRIVER_CHECK            = 0x71, // 113: uint Seed + byte[20] SHA1 + byte driverNameIndex (check to ensure driver isn't loaded)
@@ -67,7 +67,7 @@ enum WardenCheckType
 struct WardenModuleUse
 {
     uint8 Command;
-    uint8 ModuleId[16];
+    uint8 ModuleId[32];
     uint8 ModuleKey[16];
     uint32 Size;
 };
@@ -93,7 +93,7 @@ struct WardenHashRequest
 
 struct ClientWardenModule
 {
-    uint8 Id[16];
+    uint8 Id[32];
     uint8 Key[16];
     uint32 CompressedSize;
     uint8* CompressedData;
@@ -129,6 +129,8 @@ class Warden
 
         // If no check is passed, the default action from config is executed
         std::string Penalty(WardenCheck* check = NULL);
+
+        void TestSendMemCheck();
 
     private:
         WorldSession* _session;

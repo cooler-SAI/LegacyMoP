@@ -61,7 +61,8 @@ void Warden::SendModuleToClient()
         pos += burstSize;
 
         EncryptData((uint8*)&packet, burstSize + 3);
-        WorldPacket pkt1(SMSG_WARDEN_DATA, burstSize + 3);
+        WorldPacket pkt1(SMSG_WARDEN_DATA, burstSize + 3 + 4);
+        pkt1 << uint32(burstSize + 3);
         pkt1.append((uint8*)&packet, burstSize + 3);
         _session->SendPacket(&pkt1);
     }
@@ -75,14 +76,15 @@ void Warden::RequestModule()
     WardenModuleUse request;
     request.Command = WARDEN_SMSG_MODULE_USE;
 
-    memcpy(request.ModuleId, _module->Id, 16);
+    memcpy(request.ModuleId, _module->Id, 32);
     memcpy(request.ModuleKey, _module->Key, 16);
     request.Size = _module->CompressedSize;
 
     // Encrypt with warden RC4 key.
     EncryptData((uint8*)&request, sizeof(WardenModuleUse));
 
-    WorldPacket pkt(SMSG_WARDEN_DATA, sizeof(WardenModuleUse));
+    WorldPacket pkt(SMSG_WARDEN_DATA, sizeof(WardenModuleUse) + 4);
+    pkt << uint32(sizeof(WardenModuleUse));
     pkt.append((uint8*)&request, sizeof(WardenModuleUse));
     _session->SendPacket(&pkt);
 }
@@ -115,9 +117,7 @@ void Warden::Update()
         else
         {
             if (diff >= _checkTimer)
-            {
                 RequestData();
-            }
             else
                 _checkTimer -= diff;
         }
@@ -176,6 +176,44 @@ uint32 Warden::BuildChecksum(const uint8* data, uint32 length)
     return checkSum;
 }
 
+/*void Warden::TestSendMemCheck()
+{
+    ByteBuffer buff;
+    buff << uint8(WARDEN_SMSG_CHEAT_CHECKS_REQUEST);
+    //buff << uint8(0x04);
+    //buff << uint32(0x65786540);
+    buff << uint8(0x00);
+    // Test Unk Check
+    //buff << uint8(0x69);
+    // Test Mem Check
+    //buff << uint8(0x82);
+    //buff << uint8(0x00);
+    //buff << uint32(0x0629933C);
+    //buff << uint8(0xA);
+    //buff << uint8(0x1D);
+    // test WPE check
+    WardenCheck* wd = sWardenCheckMgr->GetWardenDataById(1);
+    buff << uint8(0x06);
+    /*buff << uint32(0xA444519C);
+    //uint8 p[20] = { 0xC4, 0x19, 0x52, 0x1B, 0x6D, 0x39, 0x99, 0x0C, 0x1D, 0x95, 0x32, 0x9C, 0x8D, 0x94, 0xB5, 0x92, 0x26, 0xCB, 0xAA, 0x98 };
+    uint8 p1[20] = { 0x98, 0xAA, 0xCB, 0x26, 0x92, 0xB5, 0x94, 0x8D, 0x9C, 0x32, 0x95, 0x1D, 0x0C, 0x99, 0x39, 0x6D, 0x1B, 0x52, 0x19, 0xC4 };
+    buff.append(p1, 20);
+    buff << uint32(16507);
+    buff << uint8(32);
+    buff.append(wd->Data.AsByteArray(0, false), wd->Data.GetNumBytes());
+    buff << uint32(wd->Address);
+    buff << uint8(wd->Length);
+    buff << uint8(0x1D);
+    sLog->outInfo(LOG_FILTER_NETWORKIO, "Uncrypted 0x02 packet - %s", ByteArrayToHexStr(const_cast<uint8*>(buff.contents()), buff.size()).c_str());
+    // Encrypt with warden RC4 key
+    EncryptData(const_cast<uint8*>(buff.contents()), buff.size());
+    sLog->outInfo(LOG_FILTER_NETWORKIO, "Crypted 0x02 packet - %s", ByteArrayToHexStr(const_cast<uint8*>(buff.contents()), buff.size()).c_str());
+    WorldPacket pkt(SMSG_WARDEN_DATA, buff.size());
+    pkt << uint32(buff.size());
+    pkt.append(buff);
+    _session->SendPacket(&pkt);
+}*/
+
 std::string Warden::Penalty(WardenCheck* check /*= NULL*/)
 {
     WardenActions action;
@@ -201,12 +239,11 @@ std::string Warden::Penalty(WardenCheck* check /*= NULL*/)
             std::string accountName;
             AccountMgr::GetName(_session->GetAccountId(), accountName);
             std::stringstream banReason;
-            banReason << "Warden Anticheat Violation";
             // Check can be NULL, for example if the client sent a wrong signature in the warden packet (CHECKSUM FAIL)
             if (check)
-                banReason << ": " << check->Comment << " (CheckId: " << check->CheckId << ")";
+                banReason << check->Comment;
 
-            sWorld->BanAccount(BAN_ACCOUNT, accountName, duration.str(), banReason.str(), "Server");
+            sWorld->BanAccount(BAN_ACCOUNT, accountName, duration.str(), banReason.str(), "Warden Anticheat");
 
             return "Ban";
         }
@@ -218,7 +255,9 @@ std::string Warden::Penalty(WardenCheck* check /*= NULL*/)
 
 void WorldSession::HandleWardenDataOpcode(WorldPacket& recvData)
 {
-    _warden->DecryptData(recvData.contents(), recvData.size());
+    uint32 cryptedSize;
+    recvData >> cryptedSize;
+    _warden->DecryptData(const_cast<uint8*>(recvData.contents() + sizeof(uint32)), cryptedSize);
     uint8 opcode;
     recvData >> opcode;
     SF_LOG_DEBUG("warden", "Got packet, opcode %02X, size %u", opcode, uint32(recvData.size()));
@@ -240,7 +279,8 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& recvData)
             break;
         case WARDEN_CMSG_HASH_RESULT:
             _warden->HandleHashResult(recvData);
-            _warden->InitializeModule();
+            //_warden->InitializeModule();
+            //_warden->TestSendMemCheck();
             break;
         case WARDEN_CMSG_MODULE_FAILED:
             SF_LOG_DEBUG("warden", "NYI WARDEN_CMSG_MODULE_FAILED received!");
