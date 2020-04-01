@@ -44,7 +44,7 @@ struct WardenCheck
 
 struct WardenCheckResult
 {
-    BigNumber Result;                                       // MEM_CHECK
+    std::string Result;                                       // MEM_CHECK
 };
 
 class WardenCheckMgr
@@ -63,6 +63,8 @@ class WardenCheckMgr
 
         std::vector<uint16> MemChecksIdPool;
         std::vector<uint16> OtherChecksIdPool;
+        std::vector<uint16> ImportantMemChecksIdPool;
+        std::vector<uint16> ImportantOtherChecksIdPool;
 
         void LoadWardenChecks();
         void LoadWardenOverrides();

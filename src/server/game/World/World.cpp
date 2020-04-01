@@ -1275,10 +1275,12 @@ void World::LoadConfigSettings(bool reload)
 
     // Warden
     SetBoolConfig(WorldBoolConfigs::CONFIG_WARDEN_ENABLED, sConfigMgr->GetBoolDefault("Warden.Enabled", false));
-    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_NUM_MEM_CHECKS, sConfigMgr->GetIntDefault("Warden.NumMemChecks", 3));
-    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_NUM_OTHER_CHECKS, sConfigMgr->GetIntDefault("Warden.NumOtherChecks", 7));
+    SetBoolConfig(WorldBoolConfigs::CONFIG_WARDEN_ENABLED_DYNAMIC_CHECKS, sConfigMgr->GetBoolDefault("Warden.EnabledDynamicChecks", false));
+    SetBoolConfig(WorldBoolConfigs::CONFIG_WARDEN_ENABLE_CHECK_BAD_VERSION, sConfigMgr->GetBoolDefault("Warden.EnableCheckBadVersion", false));
+    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_NUM_MEM_CHECKS, sConfigMgr->GetIntDefault("Warden.NumMemChecks", 10));
+    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_NUM_OTHER_CHECKS, sConfigMgr->GetIntDefault("Warden.NumOtherChecks", 10));
     setIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_BAN_DURATION, sConfigMgr->GetIntDefault("Warden.BanDuration", 86400));
-    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF, sConfigMgr->GetIntDefault("Warden.ClientCheckHoldOff", 30));
+    setIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF, sConfigMgr->GetIntDefault("Warden.ClientCheckHoldOff", 20000));
     setIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_FAIL_ACTION, sConfigMgr->GetIntDefault("Warden.ClientCheckFailAction", 0));
     setIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_RESPONSE_DELAY, sConfigMgr->GetIntDefault("Warden.ClientResponseDelay", 600));
 

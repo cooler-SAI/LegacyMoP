@@ -29,9 +29,13 @@
 #include "Player.h"
 #include "Util.h"
 #include "Warden.h"
+#include "World.h"
 #include "AccountMgr.h"
 
-Warden::Warden() : _inputCrypto(16), _outputCrypto(16), _checkTimer(10000/*10 sec*/), _clientResponseTimer(0), _dataSent(false), _initialized(false) { }
+Warden::Warden() : _inputCrypto(16), _outputCrypto(16), _checkTimer(10000), _dynamicCheckTimer(5000), isDebuggerPresentFunc(0),
+m_speedAlert(0), m_speedExtAlert(0), m_moveFlagsAlert(0), m_failedCoordsAlert(0), _dataSent(false), _dynDataSent(false), _initialized(false), _recall(false), pendingBan(false)
+{
+}
 
 Warden::~Warden()
 {
@@ -89,17 +93,26 @@ void Warden::RequestModule()
     _session->SendPacket(&pkt);
 }
 
-void Warden::Update()
+void Warden::Update(uint32 diff)
 {
     if (_initialized)
     {
-        uint32 currentTimestamp = getMSTime();
-        uint32 diff = currentTimestamp - _previousTimestamp;
-        _previousTimestamp = currentTimestamp;
-
-        if (_dataSent)
+        // static checks - first thread of checks
+        // not nessesary player in world
+        if (!_dataSent)
         {
-            uint32 maxClientResponseDelay = sWorld->getIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_RESPONSE_DELAY);
+            if (_checkTimer <= diff)
+            {
+                RequestStaticData();
+                //sLog->outError("Packet of static checks sended to client");
+                _checkTimer = sWorld->getIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF) * IN_MILLISECONDS;
+            }
+            else
+                _checkTimer -= diff;
+        }
+        else
+        {
+            //uint32 maxClientResponseDelay = sWorld->getIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_RESPONSE_DELAY);
 
             /*if (maxClientResponseDelay > 0)
             {
@@ -114,13 +127,20 @@ void Warden::Update()
                     _clientResponseTimer += diff;
             }*/
         }
-        else
+        // dynamic checks - second thread of checks
+        // requires player in world
+        /*if (!_dynDataSent)
         {
-            if (diff >= _checkTimer)
-                RequestData();
-            else
-                _checkTimer -= diff;
-        }
+            Player * plr = _session->GetPlayer();
+            if (plr && plr->IsInWorld() /*&& !plr->IsBlocked() && !plr->IsBeingTeleported())
+                RequestDynamicData();
+        }*/
+
+        /*if (!_recall && isDebuggerPresentFunc)
+        {
+            InitializeModule(true);
+            _recall = true;
+        }*/
     }
 }
 
@@ -174,6 +194,24 @@ uint32 Warden::BuildChecksum(const uint8* data, uint32 length)
         checkSum = checkSum ^ hash.ints.ints[i];
 
     return checkSum;
+}
+
+void Warden::ClearAlerts()
+{
+    m_speedAlert = 0;
+    m_speedExtAlert = 0;
+    m_moveFlagsAlert = 0;
+    m_failedCoordsAlert = 0;
+}
+
+void Warden::ClearAddresses()
+{
+    playerBase = 0;
+    offset = 0;
+    playerDynamicBase = 0;
+
+    if (_dynDataSent)
+        _dynDataSent = false;
 }
 
 /*void Warden::TestSendMemCheck()
@@ -279,7 +317,7 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& recvData)
             break;
         case WARDEN_CMSG_HASH_RESULT:
             _warden->HandleHashResult(recvData);
-            _warden->InitializeModule();
+            _warden->InitializeModule(false);
             //_warden->TestSendMemCheck();
             break;
         case WARDEN_CMSG_MODULE_FAILED:

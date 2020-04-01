@@ -37,7 +37,7 @@ class WardenMac : public Warden
 
         void Init(WorldSession* session, BigNumber* k);
         ClientWardenModule* GetModuleForClient();
-        void InitializeModule();
+        void InitializeModule(bool recall);
         void RequestHash();
         void HandleHashResult(ByteBuffer& buff);
         void RequestData();

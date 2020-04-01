@@ -89,7 +89,7 @@ ClientWardenModule* WardenMac::GetModuleForClient()
     return mod;
 }
 
-void WardenMac::InitializeModule()
+void WardenMac::InitializeModule(bool recall)
 {
     SF_LOG_DEBUG("warden", "Initialize module");
 }
