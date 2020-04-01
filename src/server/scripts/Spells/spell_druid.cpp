@@ -902,7 +902,7 @@ class spell_druid_eclipse : public SpellScriptLoader
         }
 };
 
-// Prowl - 5212
+// Prowl - 5212, Prowl - 102547 and Dash - 1850
 class spell_druid_prowl : public SpellScriptLoader
 {
     public:
