@@ -10308,6 +10308,11 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
                 builder.AppendState(4882, 0);              // 10 WORLD_STATE_HOR_WAVE_COUNT
             }
             break;
+        // Arena TolVir
+        case 6296:
+            if (bg && bg->GetTypeID(true) == BATTLEGROUND_TV)
+                bg->FillInitialWorldStates(data);
+            break;
 
             // No break here, intended.
         default:

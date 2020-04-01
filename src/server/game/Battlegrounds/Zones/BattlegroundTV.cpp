@@ -100,8 +100,8 @@ void BattlegroundTV::HandleAreaTrigger(Player* player, uint32 trigger)
 
     switch (trigger)
     {
-        case 4536:
-        case 4537:
+        case 8451:                                          // out from waiting room
+        case 8452:                                          // out from waiting room
             break;
         default:
             Battleground::HandleAreaTrigger(player, trigger);
