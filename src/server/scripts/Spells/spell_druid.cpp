@@ -65,7 +65,8 @@ enum DruidSpells
     SPELL_DRUID_BEAR_FORM                   = 5487,
     SPELL_DRUID_WEAKENED_ARMOR              = 113746,
     SPELL_DRUID_GLYPH_OF_FRENZIED_REGEN     = 54810,
-    SPELL_DRUID_FRENZIED_REGEN_HEAL_TAKE    = 124769
+    SPELL_DRUID_FRENZIED_REGEN_HEAL_TAKE    = 124769,
+    SPELL_DRUID_STARFALL                    = 48505
 };
 
 // 1850 - Dash
@@ -1137,6 +1138,124 @@ class spell_druid_frenzied_regeneration : public SpellScriptLoader
         }
 };
 
+// Celestial Alignment - 112071
+class spell_druid_celestial_alignment : public SpellScriptLoader
+{
+    public:
+        spell_druid_celestial_alignment() : SpellScriptLoader("spell_druid_celestial_alignment") { }
+
+        class spell_druid_celestial_alignment_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_druid_celestial_alignment_AuraScript);
+
+            void OnApply(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+            {
+                Unit* target = GetTarget();
+                if (!target)
+                    return;
+
+                Player* player = target->ToPlayer();
+                if (!player)
+                    return;
+
+                player->SetPower(POWER_ECLIPSE, 0);
+
+                player->RemoveAurasDueToSpell(SPELL_DRUID_SOLAR_ECLIPSE);
+                player->RemoveAurasDueToSpell(SPELL_DRUID_LUNAR_ECLIPSE);
+                player->RemoveAurasDueToSpell(67483);  // markers
+                player->RemoveAurasDueToSpell(67484);
+
+                player->CastSpell(player, SPELL_DRUID_ECLIPSE_GENERAL_ENERGIZE, true);
+                player->CastSpell(player, SPELL_DRUID_NATURES_GRACE, true); // Cast Nature's Grace
+                player->RemoveSpellCooldown(SPELL_DRUID_STARFALL, true);
+            }
+
+            void OnRemove(AuraEffect const* aurEff, AuraEffectHandleModes /*mode*/)
+            {
+                Unit* target = GetTarget();
+                if (!target)
+                    return;
+
+                Player* player = target->ToPlayer();
+                if (!player)
+                    return;
+
+                player->RemoveAura(SPELL_DRUID_NATURES_GRACE);
+            }
+
+            void Register() override
+            {
+                AfterEffectApply += AuraEffectApplyFn(spell_druid_celestial_alignment_AuraScript::OnApply, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+                AfterEffectRemove += AuraEffectRemoveFn(spell_druid_celestial_alignment_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_druid_celestial_alignment_AuraScript();
+        }
+};
+
+// Astral Communion - 127663
+class spell_druid_astral_communion : public SpellScriptLoader
+{
+    public:
+        spell_druid_astral_communion() : SpellScriptLoader("spell_druid_astral_communion") { }
+
+        class spell_druid_astral_communion_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_druid_astral_communion_AuraScript);
+
+            int32 direction;
+            bool Load()
+            {
+                direction = 1;
+                return true;
+            }
+
+            void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes mode)
+            {
+                if (Unit* caster = GetCaster())
+                {
+                    direction = caster->HasAura(67483) ? 1 : -1;
+
+                    if (Aura* aura = caster->GetAura(145138))
+                    {
+                        int32 _amount = 100 * direction;
+                        caster->CastCustomSpell(caster, 89265, &_amount, NULL, NULL, true);
+                        aura->Remove(AURA_REMOVE_BY_DEFAULT);
+                        GetAura()->Remove();
+                    }
+                }
+            }
+
+            void OnTick(AuraEffect const* aurEff)
+            {
+                Player* player = GetTarget()->ToPlayer();
+                if (!player)
+                    return;
+
+                if (player->HasAura(112071))
+                    return;
+
+                int32 mod = aurEff->GetAmount() * direction;
+                // energize
+                player->CastCustomSpell(player, 89265, &mod, NULL, NULL, true);
+            }
+
+            void Register()
+            {
+                OnEffectApply += AuraEffectApplyFn(spell_druid_astral_communion_AuraScript::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
+                OnEffectPeriodic += AuraEffectPeriodicFn(spell_druid_astral_communion_AuraScript::OnTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
+            }
+        };
+
+        AuraScript* GetAuraScript() const
+        {
+            return new spell_druid_astral_communion_AuraScript();
+        }
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_dash();
@@ -1166,4 +1285,6 @@ void AddSC_druid_spell_scripts()
     new spell_druid_faerie_fire();
     new spell_druid_stampeding_roar();
     new spell_druid_frenzied_regeneration();
+    new spell_druid_celestial_alignment();
+    new spell_druid_astral_communion();
 }
