@@ -850,7 +850,7 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BattlegroundTypeId::BATTLEGROUND_BFG:
             bg = new BattlegroundBFG(*(BattlegroundBFG*)bg_template);
             break;
-        case BATTLEGROUND_TTP:
+        case BattlegroundTypeId::BATTLEGROUND_TTP:
             bg = new BattlegroundTTP(*(BattlegroundTTP*)bg_template);
             break;
         case BattlegroundTypeId::BATTLEGROUND_TV:

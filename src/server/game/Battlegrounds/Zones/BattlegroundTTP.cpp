@@ -85,7 +85,7 @@ void BattlegroundTTP::HandleKillPlayer(Player* player, Player* killer)
 
     if (!killer)
     {
-        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundTTP: Killer player not found");
+        SF_LOG_ERROR("bg.battleground", "BattlegroundTTP: Killer player not found");
         return;
     }
 
@@ -101,26 +101,25 @@ bool BattlegroundTTP::HandlePlayerUnderMap(Player* player)
     return true;
 }
 
-void BattlegroundTTP::HandleAreaTrigger(Player* Source, uint32 Trigger)
+void BattlegroundTTP::HandleAreaTrigger(Player* player, uint32 trigger)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
     //uint32 SpellId = 0;
     //uint64 buff_guid = 0;
-    switch (Trigger)
+    switch (trigger)
     {
         case 9127:                                          // start position
         case 9126:                                          // start position
             break;
         default:
-            sLog->outError(LOG_FILTER_BATTLEGROUND, "WARNING: Unhandled AreaTrigger in Battleground: %u", Trigger);
-            Source->GetSession()->SendAreaTriggerMessage("Warning: Unhandled AreaTrigger in Battleground: %u", Trigger);
+            Battleground::HandleAreaTrigger(player, trigger);
             break;
     }
 
     //if (buff_guid)
-    //    HandleTriggerBuff(buff_guid, Source);
+    //    HandleTriggerBuff(buff_guid, trigger);
 }
 
 void BattlegroundTTP::FillInitialWorldStates(WorldStateBuilder& builder)

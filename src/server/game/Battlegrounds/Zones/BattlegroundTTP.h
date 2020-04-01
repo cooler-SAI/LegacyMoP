@@ -54,16 +54,16 @@ class BattlegroundTTP : public Battleground
         ~BattlegroundTTP();
 
         /* inherited from BattlegroundClass */
-        virtual void AddPlayer(Player* player);
-        virtual void StartingEventCloseDoors();
-        virtual void StartingEventOpenDoors();
+        virtual void AddPlayer(Player* player) OVERRIDE;
+        virtual void StartingEventCloseDoors() OVERRIDE;
+        virtual void StartingEventOpenDoors() OVERRIDE;
 
-        void RemovePlayer(Player* player, uint64 guid, uint32 team);
-        void HandleAreaTrigger(Player* Source, uint32 Trigger);
-        bool SetupBattleground();
-        virtual void Reset();
-        virtual void FillInitialWorldStates(WorldPacket &d);
-        void HandleKillPlayer(Player* player, Player* killer);
+        void RemovePlayer(Player* player, uint64 guid, uint32 team) OVERRIDE;
+        void HandleAreaTrigger(Player* player, uint32 trigger) OVERRIDE;
+        bool SetupBattleground() OVERRIDE;
+        void Reset() OVERRIDE;
+        void FillInitialWorldStates(WorldStateBuilder& builder) OVERRIDE;
+        void HandleKillPlayer(Player* player, Player* killer) OVERRIDE;
         bool HandlePlayerUnderMap(Player* player);
 };
 #endif
