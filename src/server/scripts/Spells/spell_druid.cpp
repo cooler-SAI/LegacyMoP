@@ -59,7 +59,10 @@ enum DruidSpells
     SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
     SPELL_DRUID_EUPHORIA                    = 81062,
     SPELL_DRUID_SUNFIRE                     = 93402,
-    SPELL_DRUID_MOONFIRE                    = 8921
+    SPELL_DRUID_MOONFIRE                    = 8921,
+    SPELL_DRUID_PROWL                       = 5215,
+    SPELL_DRUID_CAT_FORM                    = 768,
+    SPELL_DRUID_BEAR_FORM                   = 5487
 };
 
 // 1850 - Dash
@@ -899,6 +902,75 @@ class spell_druid_eclipse : public SpellScriptLoader
         }
 };
 
+// Prowl - 5212
+class spell_druid_prowl : public SpellScriptLoader
+{
+    public:
+        spell_druid_prowl() : SpellScriptLoader("spell_druid_prowl") { }
+
+        class spell_druid_prowl_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_prowl_SpellScript);
+
+            bool Validate(SpellInfo const* /*spellEntry*/) override
+            {
+                if (!sSpellMgr->GetSpellInfo(SPELL_DRUID_PROWL))
+                    return false;
+                return true;
+            }
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                    _player->CastSpell(_player, SPELL_DRUID_CAT_FORM, true);
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_druid_prowl_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_prowl_SpellScript();
+        }
+};
+
+// Growl - 6795, Might of Ursoc - 106922, Stampeding Roar - 106898
+class spell_druid_growl : public SpellScriptLoader
+{
+    public:
+        spell_druid_growl() : SpellScriptLoader("spell_druid_growl") { }
+
+        class spell_druid_growl_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_growl_SpellScript);
+
+            void HandleOnHit()
+            {
+                // This spell activate the bear form
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (GetSpellInfo()->Id == 106898 && _player->GetShapeshiftForm() != FORM_CAT && _player->GetShapeshiftForm() != FORM_BEAR && !_player->HasAura(114300))
+                        _player->CastSpell(_player, SPELL_DRUID_BEAR_FORM, true);
+                    else if (GetSpellInfo()->Id != 106898)
+                        _player->CastSpell(_player, SPELL_DRUID_BEAR_FORM, true);
+                }
+            }
+
+            void Register()override
+            {
+                OnHit += SpellHitFn(spell_druid_growl_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_growl_SpellScript();
+        }
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_dash();
@@ -922,4 +994,6 @@ void AddSC_druid_spell_scripts()
 
     /// legacy script druid
     new spell_druid_eclipse();
+    new spell_druid_prowl();
+    new spell_druid_growl();
 }
