@@ -62,7 +62,8 @@ enum DruidSpells
     SPELL_DRUID_MOONFIRE                    = 8921,
     SPELL_DRUID_PROWL                       = 5215,
     SPELL_DRUID_CAT_FORM                    = 768,
-    SPELL_DRUID_BEAR_FORM                   = 5487
+    SPELL_DRUID_BEAR_FORM                   = 5487,
+    SPELL_DRUID_WEAKENED_ARMOR              = 113746,
 };
 
 // 1850 - Dash
@@ -971,6 +972,77 @@ class spell_druid_growl : public SpellScriptLoader
         }
 };
 
+// Teleport : Moonglade - 18960
+class spell_druid_teleport_moonglade : public SpellScriptLoader
+{
+    public:
+        spell_druid_teleport_moonglade() : SpellScriptLoader("spell_druid_teleport_moonglade") { }
+
+        class spell_druid_teleport_moonglade_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_teleport_moonglade_SpellScript);
+
+            void HandleAfterCast()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if(_player->GetDistance(7964.063f, -2491.099f, 487.83f) > 100.0f)
+                    {
+                        _player->SaveRecallPosition();
+                        _player->TeleportTo(1, 7964.063f, -2491.099f, 487.83f, _player->GetOrientation());
+                    }
+                    else
+                        _player->TeleportTo(_player->m_recallMap, _player->m_recallX, _player->m_recallY, _player->m_recallZ, _player->m_recallO);
+                }
+            }
+
+            void Register() override
+            {
+                AfterCast += SpellCastFn(spell_druid_teleport_moonglade_SpellScript::HandleAfterCast);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_teleport_moonglade_SpellScript();
+        }
+};
+
+// Faerie Fire - 770
+class spell_druid_faerie_fire : public SpellScriptLoader
+{
+    public:
+        spell_druid_faerie_fire() : SpellScriptLoader("spell_druid_faerie_fire") { }
+
+        class spell_druid_faerie_fire_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_faerie_fire_SpellScript);
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (Unit* target = GetHitUnit())
+                    {
+                        _player->CastSpell(target, SPELL_DRUID_WEAKENED_ARMOR, true);
+                        _player->CastSpell(target, SPELL_DRUID_WEAKENED_ARMOR, true);
+                        _player->CastSpell(target, SPELL_DRUID_WEAKENED_ARMOR, true);
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_druid_faerie_fire_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_faerie_fire_SpellScript();
+        }
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_dash();
@@ -996,4 +1068,6 @@ void AddSC_druid_spell_scripts()
     new spell_druid_eclipse();
     new spell_druid_prowl();
     new spell_druid_growl();
+    new spell_druid_teleport_moonglade();
+    new spell_druid_faerie_fire();
 }
