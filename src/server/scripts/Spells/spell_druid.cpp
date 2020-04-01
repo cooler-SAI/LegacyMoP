@@ -56,7 +56,10 @@ enum DruidSpells
     SPELL_DRUID_STAMPEDE_BAER_RANK_1        = 81016,
     SPELL_DRUID_STAMPEDE_CAT_RANK_1         = 81021,
     SPELL_DRUID_STAMPEDE_CAT_STATE          = 109881,
-    SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178
+    SPELL_DRUID_TIGER_S_FURY_ENERGIZE       = 51178,
+    SPELL_DRUID_EUPHORIA                    = 81062,
+    SPELL_DRUID_SUNFIRE                     = 93402,
+    SPELL_DRUID_MOONFIRE                    = 8921
 };
 
 // 1850 - Dash
@@ -131,116 +134,6 @@ public:
     AuraScript* GetAuraScript() const override
     {
         return new spell_dru_eclipse_AuraScript();
-    }
-};
-
-// 2912, 5176, 78674 - Starfire, Wrath, and Starsurge
-class spell_dru_eclipse_energize : public SpellScriptLoader
-{
-public:
-    spell_dru_eclipse_energize() : SpellScriptLoader("spell_dru_eclipse_energize") { }
-
-    class spell_dru_eclipse_energize_SpellScript : public SpellScript
-    {
-        PrepareSpellScript(spell_dru_eclipse_energize_SpellScript);
-
-        int32 energizeAmount;
-
-        bool Load() override
-        {
-            if (GetCaster()->GetTypeId() != TypeID::TYPEID_PLAYER)
-                return false;
-
-            if (GetCaster()->ToPlayer()->getClass() != CLASS_DRUID)
-                return false;
-
-            energizeAmount = 0;
-
-            return true;
-        }
-
-        void HandleEnergize(SpellEffIndex effIndex)
-        {
-            Player* caster = GetCaster()->ToPlayer();
-
-            // No boomy, no deal.
-            if (caster->GetTalentSpecialization(caster->GetActiveSpec()) != TALENT_TREE_DRUID_BALANCE)
-                return;
-
-            switch (GetSpellInfo()->Id)
-            {
-            case SPELL_DRUID_WRATH:
-            {
-                energizeAmount = -GetSpellInfo()->Effects[effIndex].BasePoints; // -13
-                // If we are set to fill the lunar side or we've just logged in with 0 power..
-                if ((!caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER) && caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE_MARKER))
-                    || caster->GetPower(POWER_ECLIPSE) == 0)
-                {
-                    caster->CastCustomSpell(caster, SPELL_DRUID_ECLIPSE_GENERAL_ENERGIZE, &energizeAmount, 0, 0, true);
-                    // If the energize was due to 0 power, cast the eclipse marker aura
-                    if (!caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE_MARKER))
-                        caster->CastSpell(caster, SPELL_DRUID_LUNAR_ECLIPSE_MARKER, true);
-                }
-                // The energizing effect brought us out of the solar eclipse, remove the aura
-                if (caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE) && caster->GetPower(POWER_ECLIPSE) <= 0)
-                    caster->RemoveAurasDueToSpell(SPELL_DRUID_SOLAR_ECLIPSE);
-                break;
-            }
-            case SPELL_DRUID_STARFIRE:
-            {
-                energizeAmount = GetSpellInfo()->Effects[effIndex].BasePoints; // 20
-                // If we are set to fill the solar side or we've just logged in with 0 power..
-                if ((!caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE_MARKER) && caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER))
-                    || caster->GetPower(POWER_ECLIPSE) == 0)
-                {
-                    caster->CastCustomSpell(caster, SPELL_DRUID_ECLIPSE_GENERAL_ENERGIZE, &energizeAmount, 0, 0, true);
-                    // If the energize was due to 0 power, cast the eclipse marker aura
-                    if (!caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER))
-                        caster->CastSpell(caster, SPELL_DRUID_SOLAR_ECLIPSE_MARKER, true);
-                }
-                // The energizing effect brought us out of the lunar eclipse, remove the aura
-                if (caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE) && caster->GetPower(POWER_ECLIPSE) >= 0)
-                    caster->RemoveAura(SPELL_DRUID_LUNAR_ECLIPSE);
-                break;
-            }
-            case SPELL_DRUID_STARSURGE:
-            {
-                // If we are set to fill the solar side or we've just logged in with 0 power (confirmed with sniffs)
-                if ((!caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE_MARKER) && caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER))
-                    || caster->GetPower(POWER_ECLIPSE) == 0)
-                {
-                    energizeAmount = GetSpellInfo()->Effects[effIndex].BasePoints; // 15
-                    caster->CastCustomSpell(caster, SPELL_DRUID_STARSURGE_ENERGIZE, &energizeAmount, 0, 0, true);
-
-                    // If the energize was due to 0 power, cast the eclipse marker aura
-                    if (!caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER))
-                        caster->CastSpell(caster, SPELL_DRUID_SOLAR_ECLIPSE_MARKER, true);
-                }
-                else if (!caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE_MARKER) && caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE_MARKER))
-                {
-                    energizeAmount = -GetSpellInfo()->Effects[effIndex].BasePoints; // -15
-                    caster->CastCustomSpell(caster, SPELL_DRUID_STARSURGE_ENERGIZE, &energizeAmount, 0, 0, true);
-                }
-                // The energizing effect brought us out of the lunar eclipse, remove the aura
-                if (caster->HasAura(SPELL_DRUID_LUNAR_ECLIPSE) && caster->GetPower(POWER_ECLIPSE) >= 0)
-                    caster->RemoveAura(SPELL_DRUID_LUNAR_ECLIPSE);
-                // The energizing effect brought us out of the solar eclipse, remove the aura
-                else if (caster->HasAura(SPELL_DRUID_SOLAR_ECLIPSE) && caster->GetPower(POWER_ECLIPSE) <= 0)
-                    caster->RemoveAura(SPELL_DRUID_SOLAR_ECLIPSE);
-                break;
-            }
-            }
-        }
-
-        void Register() override
-        {
-            OnEffectHitTarget += SpellEffectFn(spell_dru_eclipse_energize_SpellScript::HandleEnergize, EFFECT_1, SPELL_EFFECT_DUMMY);
-        }
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new spell_dru_eclipse_energize_SpellScript;
     }
 };
 
@@ -942,12 +835,75 @@ public:
     }
 };
 
+/// legacy script druid
+// 5176 - Wrath, 2912 - Starfire and 78674 - Starsurge
+class spell_druid_eclipse : public SpellScriptLoader
+{
+    public:
+        spell_druid_eclipse() : SpellScriptLoader("spell_druid_eclipse") { }
+
+        class spell_druid_eclipse_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_eclipse_SpellScript);
+
+            void HandleOnHit()
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (Unit* target = GetHitUnit())
+                    {
+                        if (_player->GetSpecializationId(_player->GetActiveSpec()) == SPEC_DRUID_BALANCE)
+                        {
+                            if (GetSpell()->IsCritForTarget(target))
+                            {
+                                if (GetSpellInfo()->Id == SPELL_DRUID_WRATH || GetSpellInfo()->Id == SPELL_DRUID_STARSURGE)
+                                {
+                                    if (Aura* aura = target->GetAura(SPELL_DRUID_SUNFIRE, _player->GetGUID()))
+                                    {
+                                        int32 newDur = aura->GetDuration() + 2 * IN_MILLISECONDS;
+                                        if (newDur > aura->GetMaxDuration())
+                                            newDur = aura->GetMaxDuration();
+                                        aura->SetDuration(newDur);
+                                    }
+                                }
+                                if (GetSpellInfo()->Id == SPELL_DRUID_STARFIRE || GetSpellInfo()->Id == SPELL_DRUID_STARSURGE)
+                                {
+                                    if (Aura* aura = target->GetAura(SPELL_DRUID_MOONFIRE, _player->GetGUID()))
+                                    {
+                                        int32 newDur = aura->GetDuration() + 2 * IN_MILLISECONDS;
+                                        if (newDur > aura->GetMaxDuration())
+                                            newDur = aura->GetMaxDuration();
+                                        aura->SetDuration(newDur);
+                                    }
+                                }
+                            }
+                        }
+                        if (_player->GetSpecializationId(_player->GetActiveSpec()) == SPEC_DRUID_RESTORATION && GetSpellInfo()->Id == SPELL_DRUID_WRATH)
+                        {
+                            if (_player->HasAura(108373))
+                                SetHitDamage(int32(GetHitDamage() * 1.2f));
+                        }
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_druid_eclipse_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_eclipse_SpellScript();
+        }
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_dash();
     new spell_dru_eclipse("spell_dru_eclipse_lunar");
     new spell_dru_eclipse("spell_dru_eclipse_solar");
-    new spell_dru_eclipse_energize();
     new spell_dru_glyph_of_innervate();
     new spell_dru_glyph_of_starfire();
     new spell_dru_glyph_of_starfire_proc();
@@ -963,4 +919,7 @@ void AddSC_druid_spell_scripts()
     new spell_dru_survival_instincts();
     new spell_dru_swift_flight_passive();
     new spell_dru_t10_restoration_4p_bonus();
+
+    /// legacy script druid
+    new spell_druid_eclipse();
 }
