@@ -64,6 +64,8 @@ enum DruidSpells
     SPELL_DRUID_CAT_FORM                    = 768,
     SPELL_DRUID_BEAR_FORM                   = 5487,
     SPELL_DRUID_WEAKENED_ARMOR              = 113746,
+    SPELL_DRUID_GLYPH_OF_FRENZIED_REGEN     = 54810,
+    SPELL_DRUID_FRENZIED_REGEN_HEAL_TAKE    = 124769
 };
 
 // 1850 - Dash
@@ -1043,6 +1045,98 @@ class spell_druid_faerie_fire : public SpellScriptLoader
         }
 };
 
+// Stampeding Roar - 97993
+class spell_druid_stampeding_roar : public SpellScriptLoader
+{
+    public:
+        spell_druid_stampeding_roar() : SpellScriptLoader("spell_druid_stampeding_roar") { }
+
+        class spell_druid_stampeding_roar_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_stampeding_roar_SpellScript);
+
+            void HandleOnHit()
+            {
+                if (Unit* target = GetHitUnit())
+                {
+                    target->RemoveMovementImpairingAuras();
+
+                    if (target->HasAura(148790))
+                    {
+                        target->RemoveAurasDueToSpell(148790); //Area Raf
+                        target->RemoveAurasDueToSpell(142913); //displaced energy periodic dmg
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnHit += SpellHitFn(spell_druid_stampeding_roar_SpellScript::HandleOnHit);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_stampeding_roar_SpellScript();
+        }
+};
+
+// Frenzied Regeneration - 22842
+class spell_druid_frenzied_regeneration : public SpellScriptLoader
+{
+    public:
+        spell_druid_frenzied_regeneration() : SpellScriptLoader("spell_druid_frenzied_regeneration") { }
+
+        class spell_druid_frenzied_regeneration_SpellScript : public SpellScript
+        {
+            PrepareSpellScript(spell_druid_frenzied_regeneration_SpellScript);
+
+            void HandleOnHit(SpellEffIndex /*effIndex*/)
+            {
+                if (Player* _player = GetCaster()->ToPlayer())
+                {
+                    if (Unit* target = GetHitUnit())
+                    {
+                        if (!_player->HasAura(SPELL_DRUID_GLYPH_OF_FRENZIED_REGEN))
+                        {
+                            int32 rageused = _player->GetPower(POWER_RAGE);
+                            int32 AP = _player->GetTotalAttackPowerValue(WeaponAttackType::BASE_ATTACK);
+                            int32 agility = _player->GetStat(STAT_AGILITY) * 2;
+                            int32 stamina = int32(_player->GetStat(STAT_STAMINA));
+                            int32 a = (AP - agility) * GetSpellInfo()->Effects[EFFECT_1].BasePoints / 100;
+                            int32 b = stamina * GetSpellInfo()->Effects[EFFECT_2].BasePoints / 100;
+
+                            int32 healAmount = int32(std::max(a, b));
+
+                            if (rageused >= 600)
+                                rageused = 600;
+                            else
+                                healAmount = rageused * healAmount / 600;
+
+                            SetEffectValue(healAmount);
+                            _player->EnergizeBySpell(_player, 22842, -rageused, POWER_RAGE);
+                        }
+                        else
+                        {
+                            SetEffectValue(0);
+                            _player->CastSpell(_player, SPELL_DRUID_FRENZIED_REGEN_HEAL_TAKE, true);
+                        }
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectLaunchTarget += SpellEffectFn(spell_druid_frenzied_regeneration_SpellScript::HandleOnHit, EFFECT_0, SPELL_EFFECT_HEAL);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_druid_frenzied_regeneration_SpellScript();
+        }
+};
+
 void AddSC_druid_spell_scripts()
 {
     new spell_dru_dash();
@@ -1070,4 +1164,6 @@ void AddSC_druid_spell_scripts()
     new spell_druid_growl();
     new spell_druid_teleport_moonglade();
     new spell_druid_faerie_fire();
+    new spell_druid_stampeding_roar();
+    new spell_druid_frenzied_regeneration();
 }
