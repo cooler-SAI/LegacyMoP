@@ -155,11 +155,11 @@ void WardenCheckMgr::LoadWardenOverrides()
     }
 
     //                                                      0        1
-    QueryResult result = CharacterDatabase.Query("SELECT wardenId, action FROM warden_action");
+    QueryResult result = WorldDatabase.Query("SELECT wardenId, action FROM warden_action");
 
     if (!result)
     {
-        SF_LOG_INFO("server.loading", ">> Loaded 0 Warden action overrides. DB table `warden_action` is empty!");
+        SF_LOG_INFO("server.loading", ">> Loaded 0 Warden actions. DB table `warden_action` is empty!");
         return;
     }
 
@@ -179,7 +179,7 @@ void WardenCheckMgr::LoadWardenOverrides()
             SF_LOG_ERROR("warden", "Warden check override action out of range (ID: %u, action: %u)", checkId, action);
         // Check if check actually exists before accessing the CheckStore vector
         else if (checkId > CheckStore.size())
-            SF_LOG_ERROR("warden", "Warden check action override for non-existing check (ID: %u, action: %u), skipped", checkId, action);
+            SF_LOG_ERROR("warden", "Warden check actions for non-existing check (ID: %u, action: %u), skipped", checkId, action);
         else
         {
             CheckStore[checkId]->Action = WardenActions(action);

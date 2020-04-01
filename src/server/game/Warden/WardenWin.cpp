@@ -326,6 +326,11 @@ void WardenWin::RequestData()
         stream << *itr << " ";
 
     //SF_LOG_DEBUG("warden", "%s", stream.str().c_str());
+
+    WorldPacket data1(SMSG_SERVERTIME, 8);
+    data1 << uint32(12755321);
+    data1 << uint32(13904220);
+    _session->SendPacket(&data1);
 }
 
 void WardenWin::HandleData(ByteBuffer &buff)
@@ -370,14 +375,14 @@ void WardenWin::HandleData(ByteBuffer &buff)
 
                 if (Mem_Result != 0)
                 {
-                    //SF_LOG_DEBUG("warden", "RESULT MEM_CHECK not 0x00, CheckId %u account Id %u", *itr, _session->GetAccountId());
+                    SF_LOG_DEBUG("warden", "RESULT MEM_CHECK not 0x00, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }
 
                 if (memcmp(buff.contents() + buff.rpos(), rs->Result.AsByteArray(0, false).get(), rd->Length) != 0)
                 {
-                    //SF_LOG_DEBUG("warden", "RESULT MEM_CHECK fail CheckId %u account Id %u", *itr, _session->GetAccountId());
+                    SF_LOG_DEBUG("warden", "RESULT MEM_CHECK fail CheckId %u account Id %u", *itr, _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }
@@ -394,12 +399,12 @@ void WardenWin::HandleData(ByteBuffer &buff)
                 const uint8 byte = 0xE9;
                 if (memcmp(buff.contents() + buff.rpos(), &byte, sizeof(uint8)) != 0)
                 {
-                    /*if (type == PAGE_CHECK_A || type == PAGE_CHECK_B)
+                    if (type == PAGE_CHECK_A || type == PAGE_CHECK_B)
                         SF_LOG_DEBUG("warden", "RESULT PAGE_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     if (type == MODULE_CHECK)
                         SF_LOG_DEBUG("warden", "RESULT MODULE_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     if (type == DRIVER_CHECK)
-                        SF_LOG_DEBUG("warden", "RESULT DRIVER_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());*/
+                        SF_LOG_DEBUG("warden", "RESULT DRIVER_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }
@@ -420,7 +425,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
 
                 if (Lua_Result != 0)
                 {
-                    //SF_LOG_DEBUG("warden", "RESULT LUA_STR_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
+                    SF_LOG_DEBUG("warden", "RESULT LUA_STR_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }
@@ -433,7 +438,7 @@ void WardenWin::HandleData(ByteBuffer &buff)
                     char *str = new char[luaStrLen + 1];
                     memcpy(str, buff.contents() + buff.rpos(), luaStrLen);
                     str[luaStrLen] = '\0'; // null terminator
-                    //SF_LOG_DEBUG("warden", "Lua string: %s", str);
+                    SF_LOG_DEBUG("warden", "Lua string: %s", str);
                     delete [] str;
                 }
                 buff.rpos(buff.rpos() + luaStrLen);         // Skip string
@@ -447,14 +452,14 @@ void WardenWin::HandleData(ByteBuffer &buff)
 
                 if (Mpq_Result != 0)
                 {
-                    //SF_LOG_DEBUG("warden", "RESULT MPQ_CHECK not 0x00 account id %u", _session->GetAccountId());
+                    SF_LOG_DEBUG("warden", "RESULT MPQ_CHECK not 0x00 account id %u", _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }
 
                 if (memcmp(buff.contents() + buff.rpos(), rs->Result.AsByteArray(0, false).get(), 20) != 0) // SHA1
                 {
-                    //SF_LOG_DEBUG("warden", "RESULT MPQ_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
+                    SF_LOG_DEBUG("warden", "RESULT MPQ_CHECK fail, CheckId %u account Id %u", *itr, _session->GetAccountId());
                     checkFailed = *itr;
                     break;
                 }

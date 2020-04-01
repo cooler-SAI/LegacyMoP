@@ -101,7 +101,7 @@ void Warden::Update()
         {
             uint32 maxClientResponseDelay = sWorld->getIntConfig(WorldIntConfigs::CONFIG_WARDEN_CLIENT_RESPONSE_DELAY);
 
-            if (maxClientResponseDelay > 0)
+            /*if (maxClientResponseDelay > 0)
             {
                 // Kick player if client response delays more than set in config
                 if (_clientResponseTimer > maxClientResponseDelay * IN_MILLISECONDS)
@@ -112,7 +112,7 @@ void Warden::Update()
                 }
                 else
                     _clientResponseTimer += diff;
-            }
+            }*/
         }
         else
         {
@@ -284,6 +284,7 @@ void WorldSession::HandleWardenDataOpcode(WorldPacket& recvData)
             break;
         case WARDEN_CMSG_MODULE_FAILED:
             SF_LOG_DEBUG("warden", "NYI WARDEN_CMSG_MODULE_FAILED received!");
+            KickPlayer();
             break;
         default:
             SF_LOG_DEBUG("warden", "Got unknown warden opcode %02X of size %u.", opcode, uint32(recvData.size() - 1));
