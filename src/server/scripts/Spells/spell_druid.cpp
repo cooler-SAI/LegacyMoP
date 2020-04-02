@@ -1207,13 +1207,14 @@ class spell_druid_astral_communion : public SpellScriptLoader
             PrepareAuraScript(spell_druid_astral_communion_AuraScript);
 
             int32 direction;
-            bool Load()
+
+            bool Load() override
             {
                 direction = 1;
                 return true;
             }
 
-            void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes mode)
+            void HandleApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 if (Unit* caster = GetCaster())
                 {
@@ -1243,14 +1244,14 @@ class spell_druid_astral_communion : public SpellScriptLoader
                 player->CastCustomSpell(player, 89265, &mod, NULL, NULL, true);
             }
 
-            void Register()
+            void Register() override
             {
                 OnEffectApply += AuraEffectApplyFn(spell_druid_astral_communion_AuraScript::HandleApply, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_druid_astral_communion_AuraScript::OnTick, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
             }
         };
 
-        AuraScript* GetAuraScript() const
+        AuraScript* GetAuraScript() const override
         {
             return new spell_druid_astral_communion_AuraScript();
         }
