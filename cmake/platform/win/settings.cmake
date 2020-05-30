@@ -16,7 +16,7 @@ set(BZIP2_LIBRARIES "bzip2")
 set(ZLIB_LIBRARIES "zlib")
 
 # We require at least Visual Studio 16.6 2019(aka 16.6) which has version nr 1926
-IF(NOT FORCE_UNSUPPORTED_COMPILER AND MSVC_VERSION LESS 1926) 
+IF(NOT FORCE_UNSUPPORTED_COMPILER AND MSVC_VERSION LESS 1925) 
   # MSVC 1925 contains internal compiler bug.
   IF(NOT FORCE_UNSUPPORTED_COMPILER AND MSVC_VERSION EQUAL 1925) #16.5
     MESSAGE(FATAL_ERROR "Visual Studio 16.5 is not supported, upgrade to 16.6 or newer!")
