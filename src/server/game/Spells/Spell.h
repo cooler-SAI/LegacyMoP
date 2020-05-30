@@ -191,6 +191,7 @@ struct SpellValue
     uint32    MaxAffectedTargets;
     float     RadiusMod;
     uint8     AuraStackAmount;
+    bool      IsCrit;
 };
 
 enum SpellState
@@ -508,6 +509,7 @@ class Spell
         void CleanupTargetList();
 
         void SetSpellValue(SpellValueMod mod, int32 value);
+        int32 GetSpellValue(SpellValueMod mod) const;
     protected:
         bool HasGlobalCooldown() const;
         void TriggerGlobalCooldown();

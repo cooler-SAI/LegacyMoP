@@ -925,6 +925,30 @@ void Unit::CastCustomSpell(Unit* target, uint32 spellId, int32 const* bp0, int32
     CastCustomSpell(spellId, values, target, triggered ? TRIGGERED_FULL_MASK : TRIGGERED_NONE, castItem, triggeredByAura, originalCaster);
 }
 
+void Unit::CastCustomSpell(Unit* target, uint32 spellId, int32 const* bp0, int32 const* bp1, int32 const* bp2, int32 const* bp3, int32 const* bp4, int32 const* bp5, bool triggered, Item* castItem /*= nullptr*/, AuraEffect const* triggeredByAura /*= nullptr*/, uint64 originalCasterGUID /*= 0*/)
+{
+    CustomSpellValues values;
+    if (bp0)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT0, *bp0);
+
+    if (bp1)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT1, *bp1);
+
+    if (bp2)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT2, *bp2);
+
+    if (bp3)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT3, *bp3);
+
+    if (bp4)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT4, *bp4);
+
+    if (bp5)
+        values.AddSpellMod(SpellValueMod::SPELLVALUE_BASE_POINT5, *bp5);
+
+    CastCustomSpell(spellId, values, target, triggered ? TRIGGERED_FULL_MASK : TRIGGERED_NONE, castItem, triggeredByAura, originalCasterGUID);
+}
+
 void Unit::CastCustomSpell(uint32 spellId, SpellValueMod mod, int32 value, Unit* target, bool triggered, Item* castItem, AuraEffect const* triggeredByAura, uint64 originalCaster)
 {
     CustomSpellValues values;
@@ -4916,7 +4940,7 @@ void Unit::SendPeriodicAuraLog(SpellPeriodicAuraLogInfo* pInfo)
     {
         data.WriteBit(!entry.overDamage);
         data.WriteBit(!entry.absorb);
-        data.WriteBit(entry.critical);
+        data.WriteBit(entry.critical);  //IsCrit
         data.WriteBit(!entry.resist);
         data.WriteBit(!entry.power);
     }
@@ -14640,7 +14664,7 @@ bool Unit::IsInRaidWith(Unit const* unit) const
         return false;
 }
 
-void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
+void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap, bool inWholeRaid, bool includePets)
 {
     Unit* owner = GetCharmerOrOwnerOrSelf();
     Group* group = NULL;
@@ -14656,14 +14680,17 @@ void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
             Player* Target = itr->GetSource();
 
             // IsHostileTo check duel and controlled by enemy
-            if (Target && Target->GetSubGroup() == subgroup && !IsHostileTo(Target))
+            if (Target && !IsHostileTo(Target) && (Target->GetSubGroup() == subgroup || inWholeRaid))
             {
                 if (Target->IsAlive() && IsInMap(Target))
                     TagUnitMap.push_back(Target);
 
-                if (Guardian* pet = Target->GetGuardianPet())
-                    if (pet->IsAlive() && IsInMap(Target))
-                        TagUnitMap.push_back(pet);
+                if (includePets)
+                {
+                    if (Guardian* pet = Target->GetGuardianPet())
+                        if (pet->IsAlive() && IsInMap(Target))
+                            TagUnitMap.push_back(pet);
+                }
             }
         }
     }
@@ -14671,9 +14698,13 @@ void Unit::GetPartyMembers(std::list<Unit*> &TagUnitMap)
     {
         if (owner->IsAlive() && (owner == this || IsInMap(owner)))
             TagUnitMap.push_back(owner);
-        if (Guardian* pet = owner->GetGuardianPet())
-            if (pet->IsAlive() && (pet == this || IsInMap(pet)))
-                TagUnitMap.push_back(pet);
+
+        if (includePets)
+        {
+            if (Guardian* pet = owner->GetGuardianPet())
+                if (pet->IsAlive() && (pet == this || IsInMap(pet)))
+                    TagUnitMap.push_back(pet);
+        }
     }
 }
 

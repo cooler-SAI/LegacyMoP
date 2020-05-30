@@ -23295,6 +23295,33 @@ void Player::AddSpellCooldown(uint32 spellid, uint32 itemid, time_t end_time)
     m_spellCooldowns[spellid] = sc;
 }
 
+void Player::ReduceSpellCooldown(uint32 spell_id, time_t modifyTime)
+{
+    ObjectGuid guid = GetGUID();
+    uint64 currTime = 0;
+
+    SpellCooldowns::iterator itr = m_spellCooldowns.find(spell_id);
+    if (itr == m_spellCooldowns.end())
+        return;
+
+    ACE_OS::gettimeofday().msec(currTime);
+
+    if ((itr->second.end - uint64(modifyTime)) > currTime)
+        itr->second.end -= uint64(modifyTime);
+    else
+        m_spellCooldowns.erase(itr);
+
+    WorldPacket data(SMSG_MODIFY_COOLDOWN, 4 + 8 + 4);
+    data.WriteGuidMask(guid, 2, 1, 0, 4, 7, 3, 6, 5);
+    data.WriteGuidBytes(guid, 4, 1);
+    data << uint32(spell_id);         // Spell ID
+    data.WriteGuidBytes(guid, 3, 6, 7, 5, 0);
+    data << int32(-modifyTime);        // Cooldown mod in milliseconds
+    data.WriteGuidBytes(guid, 2);
+
+    SendDirectMessage(&data);
+}
+
 void Player::ModifySpellCooldown(uint32 spellId, int32 cooldown)
 {
     SpellCooldowns::iterator itr = m_spellCooldowns.find(spellId);

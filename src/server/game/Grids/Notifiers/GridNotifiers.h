@@ -899,6 +899,26 @@ namespace Skyfire
             bool i_playerOnly;
     };
 
+    class AnyUnitHavingBuffInObjectRangeCheck
+    {
+        public:
+            AnyUnitHavingBuffInObjectRangeCheck(WorldObject const* obj, Unit const* funit, float range, uint32 spellid, bool isfriendly)
+                : i_obj(obj), i_funit(funit), i_range(range), i_spellid(spellid), i_friendly(isfriendly) {}
+            bool operator()(Unit* u)
+            {
+                if (u->IsAlive() && i_obj->IsWithinDistInMap(u, i_range) && i_funit->IsFriendlyTo(u) == i_friendly && u->HasAura(i_spellid, i_obj->GetGUID()))
+                    return true;
+                else
+                    return false;
+            }
+        private:
+            WorldObject const* i_obj;
+            Unit const* i_funit;
+            float i_range;
+            bool i_friendly;
+            uint32 i_spellid;
+    };
+
     class AnyGroupedUnitInObjectRangeCheck
     {
         public:
@@ -1398,6 +1418,7 @@ namespace Skyfire
             uint64 _GUID;
     };
 
+
     class HeightDifferenceCheck
     {
     public:
@@ -1435,6 +1456,25 @@ namespace Skyfire
             bool _present;
             uint32 _spellId;
             uint64 _casterGUID;
+    };
+
+    class UnitAuraTypeCheck
+    {
+        public:
+            UnitAuraTypeCheck(bool present, AuraType type) : _present(present), _type(type) {}
+            bool operator()(Unit* unit) const
+            {
+                return unit->HasAuraType(_type) == _present;
+            }
+
+            bool operator()(WorldObject* object) const
+            {
+                return object->ToUnit() && object->ToUnit()->HasAuraType(_type) == _present;
+            }
+
+        private:
+            bool _present;
+            AuraType _type;
     };
 
     // Player checks and do

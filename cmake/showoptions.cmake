@@ -11,9 +11,9 @@
 
 # output generic information about the core and buildtype chosen
 message("")
-message("* SkyFire revision   : ${rev_hash} ${rev_date} (${rev_branch} branch)")
+message("* LegacyProjectMoP revision   : ${rev_hash} ${rev_date} (${rev_branch} branch)")
 if( UNIX )
-  message("* SkyFire buildtype  : ${CMAKE_BUILD_TYPE}")
+  message("* LegacyProjectMoP buildtype  : ${CMAKE_BUILD_TYPE}")
 endif()
 message("")
 

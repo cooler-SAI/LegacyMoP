@@ -506,6 +506,7 @@ SpellValue::SpellValue(SpellInfo const* proto)
     MaxAffectedTargets = proto->MaxAffectedTargets;
     RadiusMod = 1.0f;
     AuraStackAmount = 1;
+    IsCrit = false;
 }
 
 Spell::Spell(Unit* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, uint64 originalCasterGUID, bool skipCheck) :
@@ -3054,6 +3055,45 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
 
         finish(false);
         return;
+    }
+
+    // Check for spells which have problems with instant cast effects, when effect procs while caster is casting
+    // Starsurge - 78674, Incinerate - 29722, Pyroblast - 11366, Avenger's Shield - 31935, Hamsting - 1715
+    if (this->GetSpellInfo()->Id == 78674 || this->GetSpellInfo()->Id == 29722 || GetSpellInfo()->Id == 114654 || this->GetSpellInfo()->Id == 11366
+        || this->GetSpellInfo()->Id == 31935 || this->GetSpellInfo()->Id == 51505 || this->GetSpellInfo()->Id == 1715)
+    {
+        int instantAura = 0;
+        int instantAura2 = 0;
+        switch (this->GetSpellInfo()->Id)
+        {
+            case 78674:
+                instantAura = 93400;
+                break;
+            case 29722:
+            case 114654:
+                instantAura = 34936;
+                instantAura2 = 140076;
+                break;
+            case 11366:
+                instantAura = 48108;
+                break;
+            case 31935:
+                instantAura = 85416;
+                break;
+            case 51505:
+                instantAura = 77762;
+                break;
+            case 1715:
+                instantAura = 115945;
+                break;
+            default:
+                break;
+        }
+
+        m_caster->SetAuraBeforeInstantCast(false);
+
+        if ((m_caster->HasAura(instantAura) || m_caster->HasAura(instantAura2)) && !m_caster->GetAuraBeforeInstantCast())
+            m_caster->SetAuraBeforeInstantCast(true);
     }
 
     // Prepare data for triggers
@@ -7530,7 +7570,10 @@ void Spell::DoAllEffectOnLaunchTarget(TargetInfo& targetInfo, float* multiplier)
         }
     }
 
-    targetInfo.crit = m_caster->isSpellCrit(unit, m_spellInfo, m_spellSchoolMask, m_attackType);
+    if (!GetSpellValue(SpellValueMod::SPELLVALUE_ALWAYS_CRIT))
+        targetInfo.crit = m_caster->isSpellCrit(unit, m_spellInfo, m_spellSchoolMask, m_attackType);
+    else
+        targetInfo.crit = true;
 }
 
 SpellCastResult Spell::CanOpenLock(uint32 effIndex, uint32 lockId, SkillType& skillId, int32& reqSkillValue, int32& skillValue)
@@ -7608,6 +7651,15 @@ void Spell::SetSpellValue(SpellValueMod mod, int32 value)
         case SPELLVALUE_BASE_POINT2:
             m_spellValue->EffectBasePoints[2] = m_spellInfo->Effects[EFFECT_2].CalcBaseValue(value);
             break;
+        case SPELLVALUE_BASE_POINT3:
+            m_spellValue->EffectBasePoints[3] = m_spellInfo->Effects[EFFECT_3].CalcBaseValue(value);
+            break;
+        case SPELLVALUE_BASE_POINT4:
+            m_spellValue->EffectBasePoints[4] = m_spellInfo->Effects[EFFECT_4].CalcBaseValue(value);
+            break;
+        case SPELLVALUE_BASE_POINT5:
+            m_spellValue->EffectBasePoints[5] = m_spellInfo->Effects[EFFECT_5].CalcBaseValue(value);
+            break;
         case SPELLVALUE_RADIUS_MOD:
             m_spellValue->RadiusMod = (float)value / 10000;
             break;
@@ -7617,7 +7669,49 @@ void Spell::SetSpellValue(SpellValueMod mod, int32 value)
         case SPELLVALUE_AURA_STACK:
             m_spellValue->AuraStackAmount = uint8(value);
             break;
+        case SPELLVALUE_ALWAYS_CRIT:
+            m_spellValue->IsCrit = bool(value);
+            break;
     }
+}
+
+int32 Spell::GetSpellValue(SpellValueMod mod) const
+{
+    switch (mod)
+    {
+    case SPELLVALUE_BASE_POINT0:
+        return m_spellValue->EffectBasePoints[0];
+        break;
+    case SPELLVALUE_BASE_POINT1:
+        return m_spellValue->EffectBasePoints[1];
+        break;
+    case SPELLVALUE_BASE_POINT2:
+        return m_spellValue->EffectBasePoints[2];
+        break;
+    case SPELLVALUE_BASE_POINT3:
+        return m_spellValue->EffectBasePoints[3];
+        break;
+    case SPELLVALUE_BASE_POINT4:
+        return m_spellValue->EffectBasePoints[4];
+        break;
+    case SPELLVALUE_BASE_POINT5:
+        return m_spellValue->EffectBasePoints[5];
+        break;
+    case SPELLVALUE_RADIUS_MOD:
+        return m_spellValue->RadiusMod;
+        break;
+    case SPELLVALUE_MAX_TARGETS:
+        return m_spellValue->MaxAffectedTargets;
+        break;
+    case SPELLVALUE_AURA_STACK:
+        return m_spellValue->AuraStackAmount;
+        break;
+    case SPELLVALUE_ALWAYS_CRIT:
+        return m_spellValue->IsCrit;
+        break;
+    }
+
+    return 0;
 }
 
 void Spell::PrepareTargetProcessing()

@@ -128,9 +128,13 @@ enum SpellValueMod
     SPELLVALUE_BASE_POINT0,
     SPELLVALUE_BASE_POINT1,
     SPELLVALUE_BASE_POINT2,
+    SPELLVALUE_BASE_POINT3,
+    SPELLVALUE_BASE_POINT4,
+    SPELLVALUE_BASE_POINT5,
     SPELLVALUE_RADIUS_MOD,
     SPELLVALUE_MAX_TARGETS,
-    SPELLVALUE_AURA_STACK
+    SPELLVALUE_AURA_STACK,
+    SPELLVALUE_ALWAYS_CRIT
 };
 
 class CustomSpellValues
@@ -1664,6 +1668,14 @@ class Unit : public WorldObject
     {
         return CalculatePct(GetHealth(), pct);
     }
+    uint32 CountPctFromMaxMana(int32 pct) const
+    {
+        return CalculatePct(GetMaxPower(POWER_MANA), pct);
+    }
+    uint32 CountPctFromCurMana(int32 pct) const
+    { 
+        return CalculatePct(GetPower(POWER_MANA), pct);
+    }
 
     void SetHealth(uint32 val);
     void SetMaxHealth(uint32 val);
@@ -1737,7 +1749,7 @@ class Unit : public WorldObject
     bool IsNeutralToAll() const;
     bool IsInPartyWith(Unit const* unit) const;
     bool IsInRaidWith(Unit const* unit) const;
-    void GetPartyMembers(std::list<Unit*> &units);
+    void GetPartyMembers(std::list<Unit*> &units, bool inWholeRaid = false, bool includePets = true);
     bool IsContestedGuard() const;
     bool IsPvP() const
     {
@@ -1986,6 +1998,7 @@ class Unit : public WorldObject
     void CastSpell(float x, float y, float z, uint32 spellId, bool triggered, Item* castItem = NULL, AuraEffect const* triggeredByAura = NULL, uint64 originalCaster = 0);
     void CastSpell(GameObject* go, uint32 spellId, bool triggered, Item* castItem = NULL, AuraEffect* triggeredByAura = NULL, uint64 originalCaster = 0);
     void CastCustomSpell(Unit* victim, uint32 spellId, int32 const* bp0, int32 const* bp1, int32 const* bp2, bool triggered, Item* castItem = NULL, AuraEffect const* triggeredByAura = NULL, uint64 originalCaster = 0);
+    void CastCustomSpell(Unit* victim, uint32 spellId, int32 const* bp0, int32 const* bp1, int32 const* bp2, int32 const* bp3, int32 const* bp4, int32 const* bp5, bool triggered, Item* castItem = nullptr, AuraEffect const* triggeredByAura = nullptr, uint64 originalCasterGUID = 0);
     void CastCustomSpell(uint32 spellId, SpellValueMod mod, int32 value, Unit* victim, bool triggered, Item* castItem = NULL, AuraEffect const* triggeredByAura = NULL, uint64 originalCaster = 0);
     void CastCustomSpell(uint32 spellId, SpellValueMod mod, int32 value, Unit* victim = NULL, TriggerCastFlags triggerFlags = TRIGGERED_NONE, Item* castItem = NULL, AuraEffect const* triggeredByAura = NULL, uint64 originalCaster = 0);
     void CastCustomSpell(uint32 spellId, CustomSpellValues const &value, Unit* victim = NULL, TriggerCastFlags triggerFlags = TRIGGERED_NONE, Item* castItem = NULL, AuraEffect const* triggeredByAura = NULL, uint64 originalCaster = 0);
@@ -2883,6 +2896,10 @@ class Unit : public WorldObject
         m_overrideAutoattackRange = range;
     }
 
+    // for instant procs from spells, that can proc while spell is casting
+    void SetAuraBeforeInstantCast(bool auraBeforeInstantCast) { hasAuraBeforeInstantCast = auraBeforeInstantCast; }
+    bool GetAuraBeforeInstantCast() { return hasAuraBeforeInstantCast; }
+
     protected:
     explicit Unit(bool isWorldObject);
 
@@ -3007,6 +3024,8 @@ class Unit : public WorldObject
     bool m_duringRemoveFromWorld; // lock made to not add stuff after begining removing from world
 
     bool _isWalkingBeforeCharm; // Are we walking before we were charmed?
+
+    bool hasAuraBeforeInstantCast;
 
     time_t _lastDamagedTime; // Part of Evade mechanics
 };

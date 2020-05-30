@@ -10,7 +10,7 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Set projectname (must be done AFTER setting configurationtypes)
-project(Project_Skyfire)
+project(LegacyProjectMoP)
 
 if( UNIX )
   cmake_minimum_required(VERSION 3.10.2)

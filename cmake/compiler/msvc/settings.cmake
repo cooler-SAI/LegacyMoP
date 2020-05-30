@@ -16,7 +16,7 @@ include(CheckCXXCompilerFlag)
 
 set(MSVC_EXPECTED_VERSION 19.24.28316.0)
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS MSVC_EXPECTED_VERSION)
-  message(FATAL_ERROR "MSVC: SkyFire requires version ${MSVC_EXPECTED_VERSION} (MSVC 2019) to build but found ${CMAKE_CXX_COMPILER_VERSION}")
+  message(FATAL_ERROR "MSVC: LegacyProjectMoP requires version ${MSVC_EXPECTED_VERSION} (MSVC 2019) to build but found ${CMAKE_CXX_COMPILER_VERSION}")
 endif()
 
 
