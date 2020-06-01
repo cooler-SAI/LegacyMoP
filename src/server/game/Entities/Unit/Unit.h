@@ -2873,6 +2873,10 @@ class Unit : public WorldObject
     // Movement info
     Movement::MoveSpline * movespline;
 
+    // for ShockWave 3+ hitted targets effect
+    void NeedResetCooldownFromShockWave(bool resetCd) { resetCooldownFromShockWave = resetCd; }
+    bool GetResetCooldownFromShockWave() { return resetCooldownFromShockWave; }
+
     // Part of Evade mechanics
     time_t GetLastDamagedTime() const
     {
@@ -3009,6 +3013,8 @@ class Unit : public WorldObject
     uint32 m_state;                                     // Even derived shouldn't modify
     uint32 m_CombatTimer;
     TimeTrackerSmall m_movesplineTimer;
+
+    bool resetCooldownFromShockWave;
 
     Diminishing m_Diminishing;
     // Manage all Units that are threatened by us

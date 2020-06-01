@@ -352,6 +352,7 @@ public:
     uint32 BaseLevel;
     uint32 SpellLevel;
     SpellDurationEntry const* DurationEntry;
+    std::list<SpellPowerEntry const*> SpellPowers;
     uint32 PowerType;
     uint32 ManaCost;
     uint32 ManaCostPerlevel;
@@ -515,6 +516,13 @@ public:
     uint32 GetRecoveryTime() const;
 
     int32 CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) const;
+    Powers GetMainPower() const
+    {
+        for (auto itr : SpellPowers)
+            return Powers(itr->powerType);
+
+        return POWER_MANA;
+    }
 
     bool IsRanked() const;
     uint8 GetRank() const;
