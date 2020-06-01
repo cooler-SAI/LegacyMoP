@@ -2191,6 +2191,8 @@ class Player : public Unit, public GridObject<Player>
         return _talentMgr->SpecInfo [spec].Glyphs [slot];
     }
 
+    bool HasGlyph(uint32 spell_id);
+
     PlayerTalentMap const* GetTalentMap(uint8 spec) const
     {
         return _talentMgr->SpecInfo [spec].Talents;
@@ -2459,6 +2461,8 @@ class Player : public Unit, public GridObject<Player>
     void UpdateMeleeHitChances();
     void UpdateRangedHitChances();
     void UpdateSpellHitChances();
+
+    float GetPvpHealingBonus() const;
 
     void UpdateAllSpellCritChances();
     void UpdateSpellCritChance(uint32 school);

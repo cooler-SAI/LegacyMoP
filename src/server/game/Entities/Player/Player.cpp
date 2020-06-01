@@ -6105,6 +6105,18 @@ float Player::GetExpertiseDodgeOrParryReduction(WeaponAttackType attType) const
     return 0.0f;
 }
 
+float Player::GetPvpHealingBonus() const
+{
+    // Pvp healing cannot work in dungeons
+    if (Map* map = GetMap())
+        if (map->IsDungeon())
+            return 1.0f;
+
+    float pvpPower = (1 + GetFloatValue(PLAYER_FIELD_PVP_POWER_HEALING) / 100);
+
+    return pvpPower;
+}
+
 float Player::OCTRegenMPPerSpirit()
 {
     uint8 level = getLevel();
@@ -18671,6 +18683,18 @@ void Player::_LoadGlyphAuras()
             SetGlyph(i, 0);
         }
     }
+}
+
+bool Player::HasGlyph(uint32 spell_id)
+{
+    for (uint8 i = 0; i < MAX_GLYPH_SLOT_INDEX; ++i)
+        if (uint32 glyph = GetGlyph(GetActiveSpec(), i))
+            if (GlyphPropertiesEntry const* gp = sGlyphPropertiesStore.LookupEntry(glyph))
+                if (GlyphSlotEntry const* gs = sGlyphSlotStore.LookupEntry(GetGlyphSlot(i)))
+                    if (gp->TypeFlags == gs->TypeFlags && gp->SpellId == spell_id)
+                        return true;
+
+    return false;
 }
 
 void Player::LoadCorpse()

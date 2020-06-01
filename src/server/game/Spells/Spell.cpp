@@ -512,7 +512,7 @@ SpellValue::SpellValue(SpellInfo const* proto)
 Spell::Spell(Unit* caster, SpellInfo const* info, TriggerCastFlags triggerFlags, uint64 originalCasterGUID, bool skipCheck) :
 m_spellInfo(sSpellMgr->GetSpellForDifficultyFromSpell(info, caster)),
 m_caster((info->AttributesEx6 & SPELL_ATTR6_CAST_BY_CHARMER && caster->GetCharmerOrOwner()) ? caster->GetCharmerOrOwner() : caster),
-m_spellValue(new SpellValue(m_spellInfo)), m_preGeneratedPath(PathGenerator(m_caster))
+m_spellValue(new SpellValue(m_spellInfo)), m_preGeneratedPath(PathGenerator(m_caster)), m_absorbed_damage(0)
 {
     m_customError = SPELL_CUSTOM_ERROR_NONE;
     m_skipCheck = skipCheck;
@@ -2552,6 +2552,9 @@ void Spell::DoAllEffectOnTarget(TargetInfo* target)
         m_damage = damageInfo.damage;
 
         caster->DealSpellDamage(&damageInfo, true);
+
+        // Used in spell scripts
+        m_absorbed_damage = damageInfo.absorb;
     }
     // Passive spell hits/misses or active spells only misses (only triggers)
     else
