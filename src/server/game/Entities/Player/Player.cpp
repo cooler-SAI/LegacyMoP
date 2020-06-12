@@ -660,7 +660,6 @@ void KillRewarder::Reward()
             if (Guild* guild = sGuildMgr->GetGuildById(guildId))
                 guild->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_KILL_CREATURE, victim->GetEntry(), 1, 0, victim, _killer);
     }
-
 }
 
 // == Player ====================================================
@@ -6046,7 +6045,6 @@ void Player::GetDodgeFromAgility(float &diminishing, float &nondiminishing)
     // calculate diminishing (green in char screen) and non-diminishing (white) contribution
     diminishing = bonus_agility * dodge_ratio * crit_to_dodge[pclass-1];
     nondiminishing = dodge_base[pclass-1] + base_agility * dodge_ratio * crit_to_dodge[pclass-1];
-
 }
 
 float Player::GetSpellCritFromIntellect()
@@ -7564,7 +7562,6 @@ void Player::_LoadCurrency(PreparedQueryResult result)
                 _ConquestCurrencytotalWeekCap = cap;
         }
         _currencyStorage.insert(PlayerCurrenciesMap::value_type(currencyID, cur));
-
     } while (result->NextRow());
 }
 
@@ -16323,7 +16320,6 @@ bool Player::SatisfyQuestPreviousQuest(Quest const* qInfo, bool msg)
                         {
                             SendCanTakeQuestResponse(INVALIDREASON_DONT_HAVE_REQ);
                             SF_LOG_DEBUG("misc", "SatisfyQuestPreviousQuest: Sent INVALIDREASON_DONT_HAVE_REQ (questId: %u) because player does not have required quest (2).", qInfo->GetQuestId());
-
                         }
                         return false;
                     }
@@ -16376,7 +16372,6 @@ bool Player::SatisfyQuestRace(Quest const* qInfo, bool msg)
         {
             SendCanTakeQuestResponse(INVALIDREASON_QUEST_FAILED_WRONG_RACE);
             SF_LOG_DEBUG("misc", "SatisfyQuestRace: Sent INVALIDREASON_QUEST_FAILED_WRONG_RACE (questId: %u) because player does not have required race.", qInfo->GetQuestId());
-
         }
         return false;
     }
@@ -17443,7 +17438,6 @@ bool Player::HasQuestForItem(uint32 itemId) const
                         }
                         else if (GetItemCount(itemId, true) < pProto->GetMaxStackSize())
                             return true;
-
                     }
                 }
             }
@@ -18805,7 +18799,6 @@ void Player::_LoadInventory(PreparedQueryResult result, uint32 timeDiff)
                         delete item;
                         continue;
                     }
-
                 }
 
                 // Item's state may have changed after storing
@@ -20686,7 +20679,6 @@ void Player::_SaveQuestStatus(SQLTransaction& trans)
             stmt->setUInt32(0, GetGUIDLow());
             stmt->setUInt32(1, saveItr->first);
             trans->Append(stmt);
-
         }
         else if (!keepAbandoned)
         {
@@ -24759,7 +24751,6 @@ void Player::ResetWeeklyQuestStatus()
     m_weeklyquests.clear();
     // DB data deleted in caller
     m_WeeklyQuestChanged = false;
-
 }
 
 void Player::ResetSeasonalQuestStatus(uint16 event_id)
@@ -25653,31 +25644,31 @@ PartyResult Player::CanUninviteFromGroup() const
 {
     Group const* grp = GetGroup();
     if (!grp)
-        return ERR_NOT_IN_GROUP;
+        return PartyResult::ERR_NOT_IN_GROUP;
 
     if (grp->isLFGGroup())
     {
         uint64 gguid = grp->GetGUID();
         if (!sLFGMgr->GetKicksLeft(gguid))
-            return ERR_PARTY_LFG_BOOT_LIMIT;
+            return PartyResult::ERR_PARTY_LFG_BOOT_LIMIT;
 
         lfg::LfgState state = sLFGMgr->GetState(gguid);
         if (sLFGMgr->IsVoteKickActive(gguid))
-            return ERR_PARTY_LFG_BOOT_IN_PROGRESS;
+            return PartyResult::ERR_PARTY_LFG_BOOT_IN_PROGRESS;
 
         if (grp->GetMembersCount() <= lfg::LFG_GROUP_KICK_VOTES_NEEDED)
-            return ERR_PARTY_LFG_BOOT_TOO_FEW_PLAYERS;
+            return PartyResult::ERR_PARTY_LFG_BOOT_TOO_FEW_PLAYERS;
 
         if (state == lfg::LFG_STATE_FINISHED_DUNGEON)
-            return ERR_PARTY_LFG_BOOT_DUNGEON_COMPLETE;
+            return PartyResult::ERR_PARTY_LFG_BOOT_DUNGEON_COMPLETE;
 
         if (grp->isRollLootActive())
-            return ERR_PARTY_LFG_BOOT_LOOT_ROLLS;
+            return PartyResult::ERR_PARTY_LFG_BOOT_LOOT_ROLLS;
 
         /// @todo Should also be sent when anyone has recently left combat, with an aprox ~5 seconds timer.
         for (GroupReference const* itr = grp->GetFirstMember(); itr != NULL; itr = itr->next())
             if (itr->GetSource() && itr->GetSource()->IsInCombat())
-                return ERR_PARTY_LFG_BOOT_IN_COMBAT;
+                return PartyResult::ERR_PARTY_LFG_BOOT_IN_COMBAT;
 
         /* Missing support for these types
             return ERR_PARTY_LFG_BOOT_COOLDOWN_S;
@@ -25687,13 +25678,13 @@ PartyResult Player::CanUninviteFromGroup() const
     else
     {
         if (!grp->IsLeader(GetGUID()) && !grp->IsAssistant(GetGUID()))
-            return ERR_NOT_LEADER;
+            return PartyResult::ERR_NOT_LEADER;
 
         if (InBattleground())
-            return ERR_INVITE_RESTRICTED;
+            return PartyResult::ERR_INVITE_RESTRICTED;
     }
 
-    return ERR_PARTY_RESULT_OK;
+    return PartyResult::ERR_PARTY_RESULT_OK;
 }
 
 bool Player::isUsingLfg()
@@ -26048,7 +26039,6 @@ void Player::SetTitle(CharTitlesEntry const* title, bool lost)
         SetFlag(PLAYER_FIELD_KNOWN_TITLES + fieldIndexOffset, flag);
         GetSession()->SendTitleEarned(title->bit_index);
     }
-
 }
 
 bool Player::isTotalImmunity()
@@ -26348,7 +26338,6 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot)
         // LootItem is being removed (looted) from the container, delete it from the DB.
         if (loot->containerID > 0)
             loot->DeleteLootItemFromContainerItemDB(item->itemid);
-
     }
     else
         SendEquipError(msg, NULL, NULL, item->itemid);
@@ -27538,7 +27527,6 @@ void Player::UpdateSpecCount(uint8 count)
 
 void Player::ActivateSpec(uint8 spec)
 {
-
     if (GetActiveSpec() == spec)
         return;
 
@@ -27643,7 +27631,6 @@ void Player::ActivateSpec(uint8 spec)
             continue;
 
         learnSpell(talentInfo->SpellId, false); // add the talent to the PlayerSpellMap
-
     }
 /*
     std::vector<uint32> const* specSpells = GetTalentTreePrimarySpells(GetTalentSpecialization(GetActiveSpec()));
@@ -28264,7 +28251,7 @@ uint8 Player::AddVoidStorageItem(const VoidStorageItem& item)
 
     if (slot >= VOID_STORAGE_MAX_SLOT)
     {
-        GetSession()->SendVoidStorageTransferResult(VOID_TRANSFER_ERROR_FULL);
+        GetSession()->SendVoidStorageTransferResult(VoidTransferError::VOID_TRANSFER_ERROR_FULL);
         return 255;
     }
 
@@ -28277,14 +28264,14 @@ void Player::AddVoidStorageItemAtSlot(uint8 slot, const VoidStorageItem& item)
 {
     if (slot >= VOID_STORAGE_MAX_SLOT)
     {
-        GetSession()->SendVoidStorageTransferResult(VOID_TRANSFER_ERROR_FULL);
+        GetSession()->SendVoidStorageTransferResult(VoidTransferError::VOID_TRANSFER_ERROR_FULL);
         return;
     }
 
     if (_voidStorageItems[slot])
     {
         SF_LOG_ERROR("misc", "Player::AddVoidStorageItemAtSlot - Player (GUID: %u, name: %s) tried to add an item to an used slot (item id: " UI64FMTD ", entry: %u, slot: %u).", GetGUIDLow(), GetName().c_str(), _voidStorageItems[slot]->ItemId, _voidStorageItems[slot]->ItemEntry, slot);
-        GetSession()->SendVoidStorageTransferResult(VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
+        GetSession()->SendVoidStorageTransferResult(VoidTransferError::VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
         return;
     }
 
@@ -28296,7 +28283,7 @@ void Player::DeleteVoidStorageItem(uint8 slot)
 {
     if (slot >= VOID_STORAGE_MAX_SLOT)
     {
-        GetSession()->SendVoidStorageTransferResult(VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
+        GetSession()->SendVoidStorageTransferResult(VoidTransferError::VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
         return;
     }
 
@@ -28317,7 +28304,7 @@ VoidStorageItem* Player::GetVoidStorageItem(uint8 slot) const
 {
     if (slot >= VOID_STORAGE_MAX_SLOT)
     {
-        GetSession()->SendVoidStorageTransferResult(VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
+        GetSession()->SendVoidStorageTransferResult(VoidTransferError::VOID_TRANSFER_ERROR_INTERNAL_ERROR_1);
         return NULL;
     }
 
